@@ -2,7 +2,7 @@ import numpy as np
 
 from .sort import nn_matching
 from .sort.preprocessing import non_max_suppression
-from .sort.tracker import Tracker as DeepSortTracker
+from .sort.tracker import Tracker as Sort
 from .sort.detection import Detection
 from .deep.extractor import Extractor
 
@@ -11,24 +11,45 @@ from .deep.weights import RESNET18_WEIGHTS
 
 
 class Tracker:
-    def __init__(self):
+    def __init__(
+        self,
+        n_init=3,
+        nn_budget=None,
+        max_iou_distance=0.7,
+        max_cosine_distance=0.7,
+        max_age=30,
+        feature_extractor=None,
+        max_nms=0.5,
+        use_cuda=True,
+        batch_size=4
+    ):
+        self.max_nms = max_nms
+
+        self.metric = nn_matching.NearestNeighborDistanceMetric(
+            "cosine", max_cosine_distance, nn_budget
+        )
+
+        self.tracker = Sort(
+            metric=self.metric,
+            n_init=n_init,
+            max_iou_distance=max_iou_distance,
+            max_age=max_age
+        )
+
+        self.extractor = feature_extractor
+
+        if self.extractor is None:
+            resnet = ResNetConfiguration(weights_path=RESNET18_WEIGHTS, use_cuda=use_cuda)
+            self.extractor = Extractor(model=resnet, batch_size=batch_size)
+
         self.tracks = None
-        max_cosine_distance = 0.7
-        nn_budget = 100
-
-        metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
-
-        self.tracker = DeepSortTracker(metric)
-
-        resnet = ResNetConfiguration(weights_path=RESNET18_WEIGHTS)
-
-        self.extractor = Extractor(resnet)
 
     def update(self, frame, detections):
 
         if len(detections) == 0:
             self.tracker.predict()
-            self.tracker.update([])  
+            self.tracker.update([])
+
             self.update_tracks()
 
             return
@@ -38,7 +59,7 @@ class Tracker:
         scores = [d[-2] for d in detections]
         classes = [d[-1] for d in detections]
 
-        indices = non_max_suppression(bboxes, 1.0, scores)
+        indices = non_max_suppression(bboxes, self.max_nms, scores)
 
         features = self.extractor(frame, bboxes)
 
@@ -48,6 +69,7 @@ class Tracker:
 
         self.tracker.predict()
         self.tracker.update(dets)
+
         self.update_tracks()
 
     def update_tracks(self):
