@@ -6,12 +6,10 @@ class FeatureModel:
     def __init__(self, use_cuda=False):
         self.device = torch.device("cuda" if use_cuda and torch.cuda.is_available() else "cpu")
         self.model_base = None
+        self.weights_path = None
         self.input_shape = None
         self.feature_layer = None
         self._preprocessor = None
-
-    def configure_model(self):
-        raise NotImplementedError("This method should be implemented by subclasses.")
 
     def load(self, weights_path):
         if os.path.exists(weights_path):

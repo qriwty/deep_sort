@@ -6,7 +6,8 @@ from .sort.tracker import Tracker as DeepSortTracker
 from .sort.detection import Detection
 from .deep.extractor import Extractor
 
-from .deep.resnet import ResNet18Config
+from .deep.configuration import ResNetConfiguration
+from .deep.weights import RESNET18_WEIGHTS
 
 
 class Tracker:
@@ -19,7 +20,9 @@ class Tracker:
 
         self.tracker = DeepSortTracker(metric)
 
-        self.extractor = Extractor(ResNet18Config())
+        resnet = ResNetConfiguration(weights_path=RESNET18_WEIGHTS)
+
+        self.extractor = Extractor(resnet)
 
     def update(self, frame, detections):
 
