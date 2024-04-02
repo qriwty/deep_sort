@@ -1,7 +1,12 @@
 from .feature_model import FeatureModel
 
+import torch
 from torchvision import transforms
-from torchvision.models import resnet18, resnet34, resnet50
+from torchvision.models import (
+    resnet18, ResNet18_Weights,
+    resnet34, ResNet34_Weights,
+    resnet50, ResNet50_Weights
+)
 
 
 class ResNetConfiguration(FeatureModel):
@@ -9,18 +14,24 @@ class ResNetConfiguration(FeatureModel):
         super(ResNetConfiguration, self).__init__(use_cuda=use_cuda)
 
         self._models = {
-            "resnet18": resnet18,
-            "resnet34": resnet34,
-            "resnet50": resnet50
+            "resnet18": {
+                "model": resnet18,
+                "weights": ResNet18_Weights
+            },
+            "resnet34": {
+                "model": resnet34,
+                "weights": ResNet34_Weights
+            },
+            "resnet50": {
+                "model": resnet50,
+                "weights": ResNet50_Weights
+            }
         }
 
         self.weights_path = weights_path
 
         self.model_base = self._get_model_base(base)
         self.model_base.to(self.device)
-
-        if weights_path:
-            self.load(weights_path)
 
         self.input_shape = (224, 224)
 
@@ -36,6 +47,11 @@ class ResNetConfiguration(FeatureModel):
         if base not in self._models:
             raise ValueError(f"Model {base} is not supported. Choose from {list(self._models.keys())}.")
 
-        model_base = self._models[base](pretrained=True if not self.weights_path else False)
+        if self.weights_path:
+            model_base = self._models[base]["model"](weights=None)
+            model_base.load_state_dict(torch.load(self.weights_path))
+        else:
+            model_weights = self._models[base]["weights"]
+            model_base = self._models[base]["model"](weights=model_weights)
 
         return model_base

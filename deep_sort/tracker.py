@@ -15,11 +15,11 @@ class Tracker:
         self,
         n_init=3,
         nn_budget=None,
-        max_iou_distance=0.7,
-        max_cosine_distance=0.7,
-        max_age=30,
+        max_iou_distance=0.9,
+        max_cosine_distance=0.9,
+        max_age=100,
         feature_extractor=None,
-        max_nms=0.5,
+        max_nms=1.0,
         use_cuda=True,
         batch_size=4
     ):
