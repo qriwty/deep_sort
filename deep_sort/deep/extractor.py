@@ -47,6 +47,7 @@ class Extractor(object):
         features = []
         for batch in batches:
             batch_tensor = torch.stack([self.model.preprocess(image) for image in batch])
+            batch_tensor = batch_tensor.to(self.model.device)
 
             with torch.no_grad():
                 batch_features = self.extract_features(batch_tensor)
@@ -55,5 +56,6 @@ class Extractor(object):
             features.append(batch_features)
 
         features = torch.cat(features, dim=0)
+        features = features.cpu()
 
         return features
