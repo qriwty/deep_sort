@@ -45,7 +45,6 @@ class Tracker:
         self.tracks = None
 
     def update(self, frame, detections):
-
         if len(detections) == 0:
             self.tracker.predict()
             self.tracker.update([])
